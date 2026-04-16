@@ -142,9 +142,4 @@ egress_rule = {
         }
     }
 
-    post {
-        always {
-            sh 'rm -f terraform.tfvars'
-        }
-    }
 }
