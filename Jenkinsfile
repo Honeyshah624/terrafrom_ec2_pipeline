@@ -30,7 +30,6 @@ aws_region       = "${params.AWS_REGION}"
 instance_type    = "${params.INSTANCE_TYPE}"
 vpc_id           = "${params.VPC_ID}"
 subnet_id        = "${params.SUBNET_ID}"
-vpc_cidr         = "10.0.0.0/16"
 ssh_user         = "ubuntu"
 ssh_port         = 22
 enable_remote_exec = true
@@ -115,8 +114,8 @@ egress_rule = {
         stage('Terraform Plan') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'TF_VAR_PUBLIC_KEY', variable: 'TF_VAR_public_key'),
-                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
+                    string(credentialsId: 'terraform-public-key', variable: 'TF_VAR_public_key'),
+                    sshUserPrivateKey(credentialsId: 'terraform-ssh-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
                 ]) {
                     script {
                         env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
@@ -130,11 +129,11 @@ egress_rule = {
             steps {
                 input message: 'Approve apply?'
                 withCredentials([
-                    string(credentialsId: 'TF_VAR_PUBLIC_KEY', variable: 'TF_VAR_public_key'),
-                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
+                    string(credentialsId: 'TF_VAR_PUBLIC_KEY', variable: 'TF_VAR_PUBLIC_KEY'),
+                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'TF_VAR_PRIVATE_KEY', usernameVariable: 'SSH_USER')
                 ]) {
                     script {
-                        env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
+                        env.TF_VAR_PRIVATE_KEY = readFile(TF_VAR_PRIVATE_KEY).trim()
                     }
                     sh 'terraform apply -auto-approve -var-file=terraform.tfvars'
                 }
@@ -142,4 +141,9 @@ egress_rule = {
         }
     }
 
+    post {
+        always {
+            sh 'rm -f terraform.tfvars'
+        }
+    }
 }
