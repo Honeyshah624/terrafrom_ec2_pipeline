@@ -114,11 +114,11 @@ egress_rule = {
         stage('Terraform Plan') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'terraform-public-key', variable: 'TF_VAR_public_key'),
-                    sshUserPrivateKey(credentialsId: 'terraform-ssh-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
+                    string(credentialsId: 'TF_VAR_PUBLIC_KEY', variable: 'TF_VAR_PUBLIC_KEY'),
+                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'TF_VAR_PRIVATE_KEY', usernameVariable: 'SSH_USER')
                 ]) {
                     script {
-                        env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
+                        env.TF_VAR_PRIVATE_KEY = readFile(TF_VAR_PRIVATE_KEY).trim()
                     }
                     sh 'terraform plan -var-file=terraform.tfvars'
                 }
