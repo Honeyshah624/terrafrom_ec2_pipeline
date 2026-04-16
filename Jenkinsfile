@@ -108,7 +108,12 @@ egress_rule = {
 
         stage('Terraform Init') {
             steps {
-                sh 'terraform init'
+                withCredentials([
+                    string(credentialsId: 'aws_access_key_id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh 'terraform init'
+                }
             }
         }
 
@@ -116,16 +121,14 @@ egress_rule = {
             steps {
                 withCredentials([
                     string(credentialsId: 'TF_VAR_PUBLIC_KEY', variable: 'TF_VAR_public_key'),
-                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
+                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER'),
+                    string(credentialsId: 'aws_access_key_id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     script {
                         env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
                     }
-                    sh '''
-                        export TF_VAR_public_key="$TF_VAR_public_key"
-                        export TF_VAR_private_key="$TF_VAR_private_key"
-                        terraform plan -var-file=terraform.tfvars
-                    '''
+                    sh 'terraform plan -var-file=terraform.tfvars'
                 }
             }
         }
@@ -135,16 +138,14 @@ egress_rule = {
                 input message: 'Approve apply?'
                 withCredentials([
                     string(credentialsId: 'TF_VAR_PUBLIC_KEY', variable: 'TF_VAR_public_key'),
-                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
+                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER'),
+                    string(credentialsId: 'aws_access_key_id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     script {
                         env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
                     }
-                    sh '''
-                        export TF_VAR_public_key="$TF_VAR_public_key"
-                        export TF_VAR_private_key="$TF_VAR_private_key"
-                        terraform apply -auto-approve -var-file=terraform.tfvars
-                    '''
+                    sh 'terraform apply -auto-approve -var-file=terraform.tfvars'
                 }
             }
         }
