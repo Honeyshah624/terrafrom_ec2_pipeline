@@ -6,8 +6,8 @@ module "ec2" {
   ami_id             = var.ami_id
   instance_type      = var.instance_type
   key_name           = var.key_name
-  public_key_path    = var.public_key_path
-  private_key_path   = var.private_key_path
+  public_key         = var.public_key
+  private_key        = var.private_key
   ssh_user           = var.ssh_user
   ssh_port           = var.ssh_port
   remote_exec_inline = var.remote_exec_inline

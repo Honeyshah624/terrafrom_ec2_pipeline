@@ -30,6 +30,7 @@ aws_region       = "${params.AWS_REGION}"
 instance_type    = "${params.INSTANCE_TYPE}"
 vpc_id           = "${params.VPC_ID}"
 subnet_id        = "${params.SUBNET_ID}"
+vpc_cidr         = "10.0.0.0/16"
 ssh_user         = "ubuntu"
 ssh_port         = 22
 enable_remote_exec = true

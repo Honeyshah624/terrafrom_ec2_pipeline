@@ -18,14 +18,15 @@ variable "key_name" {
   type        = string
 }
 
-variable "public_key_path" {
-  description = "Path to local public SSH key"
+variable "public_key" {
+  description = "Public SSH key content"
   type        = string
 }
 
-variable "private_key_path" {
-  description = "Path to local private SSH key"
+variable "private_key" {
+  description = "Private SSH key content"
   type        = string
+  sensitive   = true
 }
 
 variable "ssh_user" {

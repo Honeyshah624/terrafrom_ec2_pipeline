@@ -28,7 +28,7 @@ resource "aws_security_group" "ssh_sg" {
 
 resource "aws_key_pair" "imported_key" {
   key_name   = var.key_name
-  public_key = file(var.public_key_path)
+  public_key = var.public_key
 
   tags = var.common_tags
 }
@@ -75,7 +75,7 @@ resource "null_resource" "install_remote" {
     user        = var.ssh_user
     host        = aws_eip.elastic_ip.public_ip
     port        = var.ssh_port
-    private_key = file(var.private_key_path)
+    private_key = var.private_key
     timeout     = "5m"
   }
 
