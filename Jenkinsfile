@@ -3,18 +3,15 @@ pipeline {
 
     parameters {
         string(name: 'AWS_REGION', defaultValue: 'ap-south-1', description: 'AWS Region')
-        string(name: 'AMI_ID', defaultValue: 'ami-xxxxxxxxxxxxxxxxx', description: 'AMI ID')
+        string(name: 'AMI_ID', defaultValue: 'ami-0a1b0c508e1fa9fce', description: 'AMI ID')
         string(name: 'VPC_ID', defaultValue: 'vpc-0ff091a8e9aca2a61', description: 'VPC ID')
         string(name: 'SUBNET_ID', defaultValue: 'subnet-00348d7a114bbb1e0', description: 'Subnet ID')
-        text(
-            name: 'REMOTE_EXEC_SCRIPT',
-            defaultValue: '''sudo apt-get update -y
-sudo apt-get install -y nginx
-sudo systemctl enable nginx
-sudo systemctl start nginx
-echo '<h1>Nginx installed dynamically through remote-exec</h1>' | sudo tee /var/www/html/index.html''',
-            description: 'One command per line'
-        )
+        string(name: 'INSTANCE_TYPE', defaultValue: 't2.micro', description: 'EC2 Instance Type')
+        string(name: 'KEY_NAME', defaultValue: 'my-secure-key', description: 'AWS Key Pair Name')
+    }
+
+    environment {
+        TF_IN_AUTOMATION = "true"
     }
 
     stages {
@@ -24,35 +21,25 @@ echo '<h1>Nginx installed dynamically through remote-exec</h1>' | sudo tee /var/
             }
         }
 
-        stage('Prepare tfvars') {
+        stage('Create tfvars') {
             steps {
-                script {
-                    def commands = params.REMOTE_EXEC_SCRIPT
-                        .split('\n')
-                        .collect { line -> line.trim() }
-                        .findAll { line -> line }
-                        .collect { line -> '  "' + line.replace('\\', '\\\\').replace('"', '\\"') + '"' }
-                        .join(",\n")
-
-                    writeFile file: 'jenkins.auto.tfvars', text: """
-key_name         = "my-secure-key"
-public_key_path  = "/home/jenkins/.ssh/id_rsa.pub"
-private_key_path = "/home/jenkins/.ssh/id_rsa"
-
-ssh_user = "ubuntu"
-ssh_port = 22
-
+                writeFile file: 'terraform.tfvars', text: """
+key_name         = "${params.KEY_NAME}"
+ami_id           = "${params.AMI_ID}"
+aws_region       = "${params.AWS_REGION}"
+instance_type    = "${params.INSTANCE_TYPE}"
+vpc_id           = "${params.VPC_ID}"
+subnet_id        = "${params.SUBNET_ID}"
+ssh_user         = "ubuntu"
+ssh_port         = 22
 enable_remote_exec = true
 
-aws_region    = "${params.AWS_REGION}"
-ami_id        = "${params.AMI_ID}"
-instance_type = "t2.micro"
-vpc_cidr      = "10.0.0.0/16"
-vpc_id        = "${params.VPC_ID}"
-subnet_id     = "${params.SUBNET_ID}"
-
 remote_exec_inline = [
-${commands}
+  "sudo apt-get update -y",
+  "sudo apt-get install -y nginx",
+  "sudo systemctl enable nginx",
+  "sudo systemctl start nginx",
+  "echo '<h1>Nginx installed dynamically through remote-exec</h1>' | sudo tee /var/www/html/index.html"
 ]
 
 common_tags = {
@@ -115,15 +102,48 @@ egress_rule = {
   cidr_blocks = ["0.0.0.0/0"]
 }
 """
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                sh 'terraform init'
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'terraform-public-key', variable: 'TF_VAR_public_key'),
+                    sshUserPrivateKey(credentialsId: 'terraform-ssh-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
+                ]) {
+                    script {
+                        env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
+                    }
+                    sh 'terraform plan -var-file=terraform.tfvars'
                 }
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh 'terraform init -input=false'
-                sh 'terraform apply -auto-approve -input=false -var-file=jenkins.auto.tfvars'
+                input message: 'Approve apply?'
+                withCredentials([
+                    string(credentialsId: 'terraform-public-key', variable: 'TF_VAR_public_key'),
+                    sshUserPrivateKey(credentialsId: 'terraform-ssh-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
+                ]) {
+                    script {
+                        env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
+                    }
+                    sh 'terraform apply -auto-approve -var-file=terraform.tfvars'
+                }
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'rm -f terraform.tfvars'
         }
     }
 }
