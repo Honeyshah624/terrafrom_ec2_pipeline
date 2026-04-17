@@ -12,12 +12,12 @@ pipeline {
         string(name: 'ssh_user', description: 'SSH User')
         number(name: 'ssh_port', description: 'SSH Port')
 
-        text(
+        string(
             name: 'INGRESS_RULES',
             description: 'Terraform format list(object) for ingress rules'
         )
 
-        text(
+        string(
             name: 'EGRESS_RULE',
             description: 'Terraform format object for egress rule'
         )
