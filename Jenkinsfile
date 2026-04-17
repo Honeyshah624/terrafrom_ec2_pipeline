@@ -13,13 +13,18 @@ pipeline {
         string(name: 'ssh_port', description: 'SSH Port')
 
         text(
+            name: 'REMOTE_EXEC_COMMANDS',
+            description: 'Paste full Terraform list value, e.g. [ "cmd1", "cmd2" ]'
+        )
+
+        text(
             name: 'INGRESS_RULES',
-            description: 'Paste ingress_rules = [...]'
+            description: 'Paste full block in value form only, e.g. [ { ... } ]'
         )
 
         text(
             name: 'EGRESS_RULE',
-            description: 'Paste egress_rule = {...}'
+            description: 'Paste full block in value form only, e.g. { ... }'
         )
     }
 
@@ -27,60 +32,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-            }
-        }
-
-        stage('Create tfvars') {
-            steps {
-                script {
-                    def commands = readFile('scripts/remote_exec_commands.txt')
-                        .split('\n')
-                        .collect { it.trim() }
-                        .findAll { it && !it.startsWith('#') }
-
-                    def terraformCommands = commands.collect { cmd ->
-                        '  "' + cmd.replace('\\', '\\\\').replace('"', '\\"') + '"'
-                    }.join(',\n')
-
-                    if (!params.INGRESS_RULES?.trim()) {
-                        error("INGRESS_RULES parameter is required")
-                    }
-                    if (!params.EGRESS_RULE?.trim()) {
-                        error("EGRESS_RULE parameter is required")
-                    }
-
-                    def ingressRulesBlock = params.INGRESS_RULES.trim()
-                    def egressRuleBlock   = params.EGRESS_RULE.trim()
-
-                    writeFile file: 'terraform.tfvars', text: """
-key_name         = "${params.KEY_NAME}"
-ami_id           = "${params.AMI_ID}"
-aws_region       = "${params.AWS_REGION}"
-instance_type    = "${params.INSTANCE_TYPE}"
-vpc_id           = "${params.VPC_ID}"
-subnet_id        = "${params.SUBNET_ID}"
-vpc_cidr         = "${params.VPC_CIDR}"
-ssh_user         = "${params.ssh_user}"
-ssh_port         = ${params.ssh_port}
-enable_remote_exec = true
-
-remote_exec_inline = [
-${terraformCommands}
-]
-
-common_tags = {
-  "Resource Owner"    = "Honey Shah"
-  "Create-Date"       = "17 April 2026"
-  "Sub Business Unit" = "PES-IA"
-  "Project Name"      = "Testing and Learning"
-  "Delivery Manager"  = "Shahid Raza"
-}
-
-${ingressRulesBlock}
-
-${egressRuleBlock}
-"""
-                }
             }
         }
 
@@ -104,9 +55,39 @@ ${egressRuleBlock}
                     string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     script {
-                        env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
+                        if (!params.REMOTE_EXEC_COMMANDS?.trim()) {
+                            error("REMOTE_EXEC_COMMANDS parameter is required")
+                        }
+                        if (!params.INGRESS_RULES?.trim()) {
+                            error("INGRESS_RULES parameter is required")
+                        }
+                        if (!params.EGRESS_RULE?.trim()) {
+                            error("EGRESS_RULE parameter is required")
+                        }
+
+                        env.TF_VAR_private_key        = readFile(SSH_KEY_FILE).trim()
+                        env.TF_VAR_key_name           = params.KEY_NAME
+                        env.TF_VAR_ami_id             = params.AMI_ID
+                        env.TF_VAR_aws_region         = params.AWS_REGION
+                        env.TF_VAR_instance_type      = params.INSTANCE_TYPE
+                        env.TF_VAR_vpc_id             = params.VPC_ID
+                        env.TF_VAR_subnet_id          = params.SUBNET_ID
+                        env.TF_VAR_vpc_cidr           = params.VPC_CIDR
+                        env.TF_VAR_ssh_user           = params.ssh_user
+                        env.TF_VAR_ssh_port           = params.ssh_port
+                        env.TF_VAR_enable_remote_exec = 'true'
+                        env.TF_VAR_remote_exec_inline = params.REMOTE_EXEC_COMMANDS.trim()
+                        env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
+                        env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
+                        env.TF_VAR_common_tags        = '''{
+  "Resource Owner"    = "Honey Shah"
+  "Create-Date"       = "17 April 2026"
+  "Sub Business Unit" = "PES-IA"
+  "Project Name"      = "Testing and Learning"
+  "Delivery Manager"  = "Shahid Raza"
+}'''
                     }
-                    sh 'terraform plan -var-file=terraform.tfvars'
+                    sh 'terraform plan'
                 }
             }
         }
@@ -121,17 +102,31 @@ ${egressRuleBlock}
                     string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     script {
-                        env.TF_VAR_private_key = readFile(SSH_KEY_FILE).trim()
+                        env.TF_VAR_private_key        = readFile(SSH_KEY_FILE).trim()
+                        env.TF_VAR_key_name           = params.KEY_NAME
+                        env.TF_VAR_ami_id             = params.AMI_ID
+                        env.TF_VAR_aws_region         = params.AWS_REGION
+                        env.TF_VAR_instance_type      = params.INSTANCE_TYPE
+                        env.TF_VAR_vpc_id             = params.VPC_ID
+                        env.TF_VAR_subnet_id          = params.SUBNET_ID
+                        env.TF_VAR_vpc_cidr           = params.VPC_CIDR
+                        env.TF_VAR_ssh_user           = params.ssh_user
+                        env.TF_VAR_ssh_port           = params.ssh_port
+                        env.TF_VAR_enable_remote_exec = 'true'
+                        env.TF_VAR_remote_exec_inline = params.REMOTE_EXEC_COMMANDS.trim()
+                        env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
+                        env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
+                        env.TF_VAR_common_tags        = '''{
+  "Resource Owner"    = "Honey Shah"
+  "Create-Date"       = "17 April 2026"
+  "Sub Business Unit" = "PES-IA"
+  "Project Name"      = "Testing and Learning"
+  "Delivery Manager"  = "Shahid Raza"
+}'''
                     }
-                    sh 'terraform apply -auto-approve -var-file=terraform.tfvars'
+                    sh 'terraform apply -auto-approve'
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            sh 'rm -f terraform.tfvars'
         }
     }
 }
