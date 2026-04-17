@@ -11,8 +11,16 @@ pipeline {
         string(name: 'VPC_CIDR', description: 'VPC CIDR Block')
         string(name: 'ssh_user', description: 'SSH User')
         number(name: 'ssh_port', description: 'SSH Port')
-        string(name: 'INGRESS_RULES',description: 'Terraform format list(object) for ingress rules')
-        string(name: 'EGRESS_RULE',description: 'Terraform format object for egress rule')
+
+        text(
+            name: 'INGRESS_RULES',
+            description: 'Terraform format list(object) for ingress rules'
+        )
+
+        text(
+            name: 'EGRESS_RULE',
+            description: 'Terraform format object for egress rule'
+        )
     }
 
     stages {
