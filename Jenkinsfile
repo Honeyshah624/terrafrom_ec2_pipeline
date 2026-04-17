@@ -2,12 +2,15 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'AWS_REGION', defaultValue: 'ap-south-1', description: 'AWS Region')
-        string(name: 'AMI_ID', defaultValue: 'ami-0a1b0c508e1fa9fce', description: 'AMI ID')
-        string(name: 'VPC_ID', defaultValue: 'vpc-0ff091a8e9aca2a61', description: 'VPC ID')
-        string(name: 'SUBNET_ID', defaultValue: 'subnet-00348d7a114bbb1e0', description: 'Subnet ID')
-        string(name: 'INSTANCE_TYPE', defaultValue: 't2.micro', description: 'EC2 Instance Type')
-        string(name: 'KEY_NAME', defaultValue: 'my-secure-key', description: 'AWS Key Pair Name')
+        string(name: 'AWS_REGION', description: 'AWS Region')
+        string(name: 'AMI_ID', description: 'AMI ID')
+        string(name: 'VPC_ID', description: 'VPC ID')
+        string(name: 'SUBNET_ID', description: 'Subnet ID')
+        string(name: 'INSTANCE_TYPE', description: 'EC2 Instance Type')
+        string(name: 'KEY_NAME', description: 'AWS Key Pair Name')
+        string(name: 'VPC_CIDR', description: 'VPC CIDR Block')
+        string(name: 'ssh_user', description: 'SSH User')
+        string(name: 'ssh_port', description: 'SSH Port')
     }
 
     environment {
@@ -30,9 +33,9 @@ pipeline {
                     instance_type    = "${params.INSTANCE_TYPE}"
                     vpc_id           = "${params.VPC_ID}"
                     subnet_id        = "${params.SUBNET_ID}"
-                    vpc_cidr         = "10.0.0.0/16"
-                    ssh_user         = "ubuntu"
-                    ssh_port         = 22
+                    vpc_cidr         = "${params.VPC_CIDR}"
+                    ssh_user         = "${params.ssh_user}"
+                    ssh_port         = "${params.ssh_port}"
                     enable_remote_exec = true
 
                     remote_exec_inline = [
