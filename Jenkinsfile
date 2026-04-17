@@ -10,9 +10,17 @@ pipeline {
         string(name: 'KEY_NAME', description: 'AWS Key Pair Name')
         string(name: 'VPC_CIDR', description: 'VPC CIDR Block')
         string(name: 'ssh_user', description: 'SSH User')
-        string(name: 'ssh_port', description: 'SSH Port', defaultValue: '22')
-        text(name: 'INGRESS_RULES', description: 'Terraform format list(object) for ingress rules - Enter valid HCL format')
-        text(name: 'EGRESS_RULE', description: 'Terraform format object for egress rule - Enter valid HCL format')
+        string(name: 'ssh_port', description: 'SSH Port')
+
+        text(
+            name: 'INGRESS_RULES',
+            description: 'Paste full block, including ingress_rules = [...]'
+        )
+
+        text(
+            name: 'EGRESS_RULE',
+            description: 'Paste full block, including egress_rule = {...}'
+        )
     }
 
     stages {
@@ -40,8 +48,9 @@ pipeline {
                     if (!params.EGRESS_RULE?.trim()) {
                         error("EGRESS_RULE parameter is required")
                     }
-                    def ingressRules = params.INGRESS_RULES.trim()
-                    def egressRule = params.EGRESS_RULE.trim()
+
+                    def ingressRulesBlock = params.INGRESS_RULES.trim()
+                    def egressRuleBlock   = params.EGRESS_RULE.trim()
 
                     writeFile file: 'terraform.tfvars', text: """
 key_name         = "${params.KEY_NAME}"
@@ -67,14 +76,14 @@ common_tags = {
   "Delivery Manager"  = "Shahid Raza"
 }
 
-ingress_rules = ${ingressRules}
+${ingressRulesBlock}
 
-egress_rule = ${egressRule}
+${egressRuleBlock}
 """
                 }
             }
         }
-        
+
         stage('Terraform Init') {
             steps {
                 withCredentials([
