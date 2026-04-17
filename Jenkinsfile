@@ -10,17 +10,9 @@ pipeline {
         string(name: 'KEY_NAME', description: 'AWS Key Pair Name')
         string(name: 'VPC_CIDR', description: 'VPC CIDR Block')
         string(name: 'ssh_user', description: 'SSH User')
-        string(name: 'ssh_port', description: 'SSH Port')
-
-        text(
-            name: 'INGRESS_RULES',
-            description: 'Terraform format list(object) for ingress rules'
-        )
-
-        text(
-            name: 'EGRESS_RULE',
-            description: 'Terraform format object for egress rule'
-        )
+        string(name: 'ssh_port', description: 'SSH Port', defaultValue: '22')
+        text(name: 'INGRESS_RULES', description: 'Terraform format list(object) for ingress rules - Enter valid HCL format')
+        text(name: 'EGRESS_RULE', description: 'Terraform format object for egress rule - Enter valid HCL format')
     }
 
     stages {
@@ -42,38 +34,47 @@ pipeline {
                         '  "' + cmd.replace('\\', '\\\\').replace('"', '\\"') + '"'
                     }.join(',\n')
 
+                    if (!params.INGRESS_RULES?.trim()) {
+                        error("INGRESS_RULES parameter is required")
+                    }
+                    if (!params.EGRESS_RULE?.trim()) {
+                        error("EGRESS_RULE parameter is required")
+                    }
+                    def ingressRules = params.INGRESS_RULES.trim()
+                    def egressRule = params.EGRESS_RULE.trim()
+
                     writeFile file: 'terraform.tfvars', text: """
-                           key_name         = "${params.KEY_NAME}"
-                           ami_id           = "${params.AMI_ID}"
-                           aws_region       = "${params.AWS_REGION}"
-                           instance_type    = "${params.INSTANCE_TYPE}"
-                           vpc_id           = "${params.VPC_ID}"
-                           subnet_id        = "${params.SUBNET_ID}"
-                           vpc_cidr         = "${params.VPC_CIDR}"
-                           ssh_user         = "${params.ssh_user}"
-                           ssh_port         = ${params.ssh_port}
-                           enable_remote_exec = true
-                           
-                           remote_exec_inline = [
-                           ${terraformCommands}
-                           ]
-                           
-                           common_tags = {
-                             "Resource Owner"    = "Honey Shah"
-                             "Create-Date"       = "17 April 2026"
-                             "Sub Business Unit" = "PES-IA"
-                             "Project Name"      = "Testing and Learning"
-                             "Delivery Manager"  = "Shahid Raza"
-                           }
-                           
-                           ingress_rules = ${params.INGRESS_RULES}
-                           
-                           egress_rule = ${params.EGRESS_RULE}
-                           """
-                                           }
-                                       }
-                                   }
-                           
+key_name         = "${params.KEY_NAME}"
+ami_id           = "${params.AMI_ID}"
+aws_region       = "${params.AWS_REGION}"
+instance_type    = "${params.INSTANCE_TYPE}"
+vpc_id           = "${params.VPC_ID}"
+subnet_id        = "${params.SUBNET_ID}"
+vpc_cidr         = "${params.VPC_CIDR}"
+ssh_user         = "${params.ssh_user}"
+ssh_port         = ${params.ssh_port}
+enable_remote_exec = true
+
+remote_exec_inline = [
+${terraformCommands}
+]
+
+common_tags = {
+  "Resource Owner"    = "Honey Shah"
+  "Create-Date"       = "17 April 2026"
+  "Sub Business Unit" = "PES-IA"
+  "Project Name"      = "Testing and Learning"
+  "Delivery Manager"  = "Shahid Raza"
+}
+
+ingress_rules = ${ingressRules}
+
+egress_rule = ${egressRule}
+"""
+                }
+            }
+        }
+        
         stage('Terraform Init') {
             steps {
                 withCredentials([
