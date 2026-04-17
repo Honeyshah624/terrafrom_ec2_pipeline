@@ -10,7 +10,7 @@ pipeline {
         string(name: 'KEY_NAME', description: 'AWS Key Pair Name')
         string(name: 'VPC_CIDR', description: 'VPC CIDR Block')
         string(name: 'ssh_user', description: 'SSH User')
-        number(name: 'ssh_port', description: 'SSH Port')
+        string(name: 'ssh_port', description: 'SSH Port')
 
         text(
             name: 'INGRESS_RULES',
