@@ -1,5 +1,5 @@
 resource "aws_security_group" "ssh_sg" {
-  name        = "secure-ssh-sg"
+  name        = "secure-ssh-sg-1"
   description = "Allow SSH and HTTP inbound rules"
   vpc_id      = var.vpc_id
 
@@ -22,7 +22,7 @@ resource "aws_security_group" "ssh_sg" {
   }
 
   tags = merge(var.common_tags, {
-    Name = "secure-ssh-sg"
+    Name = "secure-ssh-sg-1"
   })
 }
 

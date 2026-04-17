@@ -14,12 +14,12 @@ pipeline {
 
         text(
             name: 'INGRESS_RULES',
-            description: 'Paste full block, including ingress_rules = [...]'
+            description: 'Paste ingress_rules = [...]'
         )
 
         text(
             name: 'EGRESS_RULE',
-            description: 'Paste full block, including egress_rule = {...}'
+            description: 'Paste egress_rule = {...}'
         )
     }
 
