@@ -12,19 +12,24 @@ pipeline {
         string(name: 'ssh_user', description: 'SSH User')
         string(name: 'ssh_port', description: 'SSH Port')
 
+        booleanParam(
+            name: 'ENABLE_REMOTE_EXEC',
+            description: 'Enable remote-exec provisioner'
+        )
+
         text(
             name: 'REMOTE_EXEC_COMMANDS',
-            description: 'Terraform list value'
+            description: 'Terraform list value of remote exec inline commands'
         )
 
         text(
             name: 'INGRESS_RULES',
-            description: 'block value'
+            description: 'Terraform list value of ingress rules'
         )
 
         text(
             name: 'EGRESS_RULE',
-            description: 'block value'
+            description: 'Terraform object value of egress rule'
         )
     }
 
@@ -65,22 +70,22 @@ pipeline {
                         env.TF_VAR_vpc_cidr           = params.VPC_CIDR
                         env.TF_VAR_ssh_user           = params.ssh_user
                         env.TF_VAR_ssh_port           = params.ssh_port
-                        env.TF_VAR_enable_remote_exec = 'true'
+                        env.TF_VAR_enable_remote_exec = params.ENABLE_REMOTE_EXEC.toString()
                         env.TF_VAR_remote_exec_inline = params.REMOTE_EXEC_COMMANDS.trim()
                         env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
                         env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
                         env.TF_VAR_common_tags        = '''{
-                                                           "Resource Owner"    = "Honey Shah"
-                                                           "Create-Date"       = "17 April 2026"
-                                                           "Sub Business Unit" = "PES-IA"
-                                                           "Project Name"      = "Testing and Learning"
-                                                           "Delivery Manager"  = "Shahid Raza"
-                                            }'''
+                                                           "Resource Owner": "Honey Shah",
+                                                           "Create-Date": "17 April 2026",
+                                                           "Sub Business Unit": "PES-IA",
+                                                           "Project Name": "Testing and Learning",
+                                                           "Delivery Manager": "Shahid Raza"
+                                                      }'''
                     }
                     sh 'terraform plan'
                 }
             }
-        }
+        } 
 
         stage('Terraform Apply') {
             steps {
@@ -102,17 +107,17 @@ pipeline {
                         env.TF_VAR_vpc_cidr           = params.VPC_CIDR
                         env.TF_VAR_ssh_user           = params.ssh_user
                         env.TF_VAR_ssh_port           = params.ssh_port
-                        env.TF_VAR_enable_remote_exec = 'true'
+                        env.TF_VAR_enable_remote_exec = params.ENABLE_REMOTE_EXEC.toString()
                         env.TF_VAR_remote_exec_inline = params.REMOTE_EXEC_COMMANDS.trim()
                         env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
                         env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
                         env.TF_VAR_common_tags        = '''{
-                                                           "Resource Owner"    = "Honey Shah"
-                                                           "Create-Date"       = "17 April 2026"
-                                                           "Sub Business Unit" = "PES-IA"
-                                                           "Project Name"      = "Testing and Learning"
-                                                           "Delivery Manager"  = "Shahid Raza"
-                                                         }'''
+  "Resource Owner": "Honey Shah",
+  "Create-Date": "17 April 2026",
+  "Sub Business Unit": "PES-IA",
+  "Project Name": "Testing and Learning",
+  "Delivery Manager": "Shahid Raza"
+}'''
                     }
                     sh 'terraform apply -auto-approve'
                 }
