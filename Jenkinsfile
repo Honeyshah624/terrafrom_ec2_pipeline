@@ -1,3 +1,27 @@
+def setTerraformEnv(params, SSH_KEY_FILE) {
+    env.TF_VAR_private_key        = readFile(SSH_KEY_FILE).trim()
+    env.TF_VAR_key_name           = params.KEY_NAME
+    env.TF_VAR_ami_id             = params.AMI_ID
+    env.TF_VAR_aws_region         = params.AWS_REGION
+    env.TF_VAR_instance_type      = params.INSTANCE_TYPE
+    env.TF_VAR_vpc_id             = params.VPC_ID
+    env.TF_VAR_subnet_id          = params.SUBNET_ID
+    env.TF_VAR_vpc_cidr           = params.VPC_CIDR
+    env.TF_VAR_ssh_user           = params.ssh_user
+    env.TF_VAR_ssh_port           = params.ssh_port
+    env.TF_VAR_enable_remote_exec = params.ENABLE_REMOTE_EXEC.toString()
+    env.TF_VAR_remote_exec_inline = params.REMOTE_EXEC_COMMANDS.trim()
+    env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
+    env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
+    env.TF_VAR_common_tags        = '''{
+                                       "Resource Owner": "Honey Shah",
+                                       "Create-Date": "17 April 2026",
+                                       "Sub Business Unit": "PES-IA",
+                                       "Project Name": "Testing and Learning",
+                                       "Delivery Manager": "Shahid Raza"
+                                     }'''
+}
+
 pipeline {
     agent any
 
@@ -14,6 +38,7 @@ pipeline {
 
         booleanParam(
             name: 'ENABLE_REMOTE_EXEC',
+            defaultValue: true,
             description: 'Enable remote-exec provisioner'
         )
 
@@ -60,67 +85,20 @@ pipeline {
                     string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     script {
-                        env.TF_VAR_private_key        = readFile(SSH_KEY_FILE).trim()
-                        env.TF_VAR_key_name           = params.KEY_NAME
-                        env.TF_VAR_ami_id             = params.AMI_ID
-                        env.TF_VAR_aws_region         = params.AWS_REGION
-                        env.TF_VAR_instance_type      = params.INSTANCE_TYPE
-                        env.TF_VAR_vpc_id             = params.VPC_ID
-                        env.TF_VAR_subnet_id          = params.SUBNET_ID
-                        env.TF_VAR_vpc_cidr           = params.VPC_CIDR
-                        env.TF_VAR_ssh_user           = params.ssh_user
-                        env.TF_VAR_ssh_port           = params.ssh_port
-                        env.TF_VAR_enable_remote_exec = params.ENABLE_REMOTE_EXEC.toString()
-                        env.TF_VAR_remote_exec_inline = params.REMOTE_EXEC_COMMANDS.trim()
-                        env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
-                        env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
-                        env.TF_VAR_common_tags        = '''{
-                                                           "Resource Owner": "Honey Shah",
-                                                           "Create-Date": "17 April 2026",
-                                                           "Sub Business Unit": "PES-IA",
-                                                           "Project Name": "Testing and Learning",
-                                                           "Delivery Manager": "Shahid Raza"
-                                                      }'''
+                        setTerraformEnv(params, SSH_KEY_FILE)
                     }
-                    sh 'terraform plan'
+
+                    sh 'terraform plan -out=tfplan'
+                    stash name: 'terraform-plan', includes: 'tfplan'
                 }
             }
-        } 
+        }
 
         stage('Terraform Apply') {
             steps {
                 input message: 'Approve apply?'
-                withCredentials([
-                    string(credentialsId: 'TF_VAR_PUBLIC_KEY', variable: 'TF_VAR_public_key'),
-                    sshUserPrivateKey(credentialsId: 'TF_VAR_PRIVATE_KEY', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER'),
-                    string(credentialsId: 'aws_access_key_id', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
-                    script {
-                        env.TF_VAR_private_key        = readFile(SSH_KEY_FILE).trim()
-                        env.TF_VAR_key_name           = params.KEY_NAME
-                        env.TF_VAR_ami_id             = params.AMI_ID
-                        env.TF_VAR_aws_region         = params.AWS_REGION
-                        env.TF_VAR_instance_type      = params.INSTANCE_TYPE
-                        env.TF_VAR_vpc_id             = params.VPC_ID
-                        env.TF_VAR_subnet_id          = params.SUBNET_ID
-                        env.TF_VAR_vpc_cidr           = params.VPC_CIDR
-                        env.TF_VAR_ssh_user           = params.ssh_user
-                        env.TF_VAR_ssh_port           = params.ssh_port
-                        env.TF_VAR_enable_remote_exec = params.ENABLE_REMOTE_EXEC.toString()
-                        env.TF_VAR_remote_exec_inline = params.REMOTE_EXEC_COMMANDS.trim()
-                        env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
-                        env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
-                        env.TF_VAR_common_tags        = '''{
-  "Resource Owner": "Honey Shah",
-  "Create-Date": "17 April 2026",
-  "Sub Business Unit": "PES-IA",
-  "Project Name": "Testing and Learning",
-  "Delivery Manager": "Shahid Raza"
-}'''
-                    }
-                    sh 'terraform apply -auto-approve'
-                }
+                unstash 'terraform-plan'
+                sh 'terraform apply -auto-approve tfplan'
             }
         }
     }
