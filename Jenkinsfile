@@ -14,17 +14,17 @@ pipeline {
 
         text(
             name: 'REMOTE_EXEC_COMMANDS',
-            description: 'Paste full Terraform list value, e.g. [ "cmd1", "cmd2" ]'
+            description: 'Terraform list value'
         )
 
         text(
             name: 'INGRESS_RULES',
-            description: 'Paste full block in value form only, e.g. [ { ... } ]'
+            description: 'block value'
         )
 
         text(
             name: 'EGRESS_RULE',
-            description: 'Paste full block in value form only, e.g. { ... }'
+            description: 'block value'
         )
     }
 
@@ -55,16 +55,6 @@ pipeline {
                     string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     script {
-                        if (!params.REMOTE_EXEC_COMMANDS?.trim()) {
-                            error("REMOTE_EXEC_COMMANDS parameter is required")
-                        }
-                        if (!params.INGRESS_RULES?.trim()) {
-                            error("INGRESS_RULES parameter is required")
-                        }
-                        if (!params.EGRESS_RULE?.trim()) {
-                            error("EGRESS_RULE parameter is required")
-                        }
-
                         env.TF_VAR_private_key        = readFile(SSH_KEY_FILE).trim()
                         env.TF_VAR_key_name           = params.KEY_NAME
                         env.TF_VAR_ami_id             = params.AMI_ID
@@ -80,12 +70,12 @@ pipeline {
                         env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
                         env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
                         env.TF_VAR_common_tags        = '''{
-  "Resource Owner"    = "Honey Shah"
-  "Create-Date"       = "17 April 2026"
-  "Sub Business Unit" = "PES-IA"
-  "Project Name"      = "Testing and Learning"
-  "Delivery Manager"  = "Shahid Raza"
-}'''
+                                                           "Resource Owner"    = "Honey Shah"
+                                                           "Create-Date"       = "17 April 2026"
+                                                           "Sub Business Unit" = "PES-IA"
+                                                           "Project Name"      = "Testing and Learning"
+                                                           "Delivery Manager"  = "Shahid Raza"
+                                            }'''
                     }
                     sh 'terraform plan'
                 }
@@ -117,12 +107,12 @@ pipeline {
                         env.TF_VAR_ingress_rules      = params.INGRESS_RULES.trim()
                         env.TF_VAR_egress_rule        = params.EGRESS_RULE.trim()
                         env.TF_VAR_common_tags        = '''{
-  "Resource Owner"    = "Honey Shah"
-  "Create-Date"       = "17 April 2026"
-  "Sub Business Unit" = "PES-IA"
-  "Project Name"      = "Testing and Learning"
-  "Delivery Manager"  = "Shahid Raza"
-}'''
+                                                           "Resource Owner"    = "Honey Shah"
+                                                           "Create-Date"       = "17 April 2026"
+                                                           "Sub Business Unit" = "PES-IA"
+                                                           "Project Name"      = "Testing and Learning"
+                                                           "Delivery Manager"  = "Shahid Raza"
+                                                         }'''
                     }
                     sh 'terraform apply -auto-approve'
                 }
