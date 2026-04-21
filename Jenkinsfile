@@ -79,7 +79,7 @@ pipeline {
                             "TF_VAR_egress_rule=${params.EGRESS_RULE.trim()}",
                             """TF_VAR_common_tags={
                                                   "Resource Owner": "Honey Shah",
-                                                  "Create-Date": "17 April 2026",
+                                                  "Create-Date": "21 April 2026",
                                                   "Sub Business Unit": "PES-IA",
                                                   "Project Name": "Testing and Learning",
                                                   "Delivery Manager": "Shahid Raza"
