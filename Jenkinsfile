@@ -79,12 +79,12 @@ pipeline {
                             "TF_VAR_ingress_rules=${params.INGRESS_RULES.trim()}",
                             "TF_VAR_egress_rule=${params.EGRESS_RULE.trim()}",
                             """TF_VAR_common_tags={
-  "Resource Owner": "Honey Shah",
-  "Create-Date": "17 April 2026",
-  "Sub Business Unit": "PES-IA",
-  "Project Name": "Testing and Learning",
-  "Delivery Manager": "Shahid Raza"
-}"""
+                                                  "Resource Owner": "Honey Shah",
+                                                  "Create-Date": "17 April 2026",
+                                                  "Sub Business Unit": "PES-IA",
+                                                  "Project Name": "Testing and Learning",
+                                                  "Delivery Manager": "Shahid Raza"
+                                                }"""
                         ]) {
                             sh 'terraform plan -out=tfplan'
                         }
