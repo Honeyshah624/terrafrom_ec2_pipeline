@@ -15,7 +15,6 @@ pipeline {
 
         booleanParam(
             name: 'ENABLE_REMOTE_EXEC',
-            defaultValue: true,
             description: 'Enable remote-exec provisioner'
         )
 
