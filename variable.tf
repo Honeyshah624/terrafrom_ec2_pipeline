@@ -13,6 +13,11 @@ variable "instance_type" {
   type        = string
 }
 
+variable "availability_zone" {
+  description = "Availability Zone for EC2 instance"
+  type        = string
+}
+
 variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
@@ -42,7 +47,7 @@ variable "ssh_port" {
 }
 
 variable "remote_exec_inline" {
-  description = "List of remote commands to execute"
+  description = "List of commands to run remotely"
   type        = list(string)
 }
 

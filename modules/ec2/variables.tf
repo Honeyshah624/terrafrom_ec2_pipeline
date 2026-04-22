@@ -13,6 +13,11 @@ variable "instance_type" {
   type        = string
 }
 
+variable "availability_zone" {
+  description = "Availability Zone for EC2 instance"
+  type        = string
+}
+
 variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
