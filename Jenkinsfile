@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    options {
+        ansiColor('xterm')
+        skipDefaultCheckout(true)
+    }
+
     parameters {
         string(name: 'AWS_REGION', description: 'AWS Region')
         string(name: 'AMI_ID', description: 'AMI ID')
@@ -15,6 +20,7 @@ pipeline {
 
         booleanParam(
             name: 'ENABLE_REMOTE_EXEC',
+            defaultValue: true,
             description: 'Enable remote-exec provisioner'
         )
 
@@ -47,7 +53,7 @@ pipeline {
                     string(credentialsId: 'aws_access_key_id', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
-                    sh 'terraform init'
+                    sh 'terraform init -no-color'
                 }
             }
         }
@@ -80,14 +86,14 @@ pipeline {
                             "TF_VAR_ingress_rules=${params.INGRESS_RULES.trim()}",
                             "TF_VAR_egress_rule=${params.EGRESS_RULE.trim()}",
                             """TF_VAR_common_tags={
-                                                  "Resource Owner": "Honey Shah",
-                                                  "Create-Date": "21 April 2026",
-                                                  "Sub Business Unit": "PES-IA",
-                                                  "Project Name": "Testing and Learning",
-                                                  "Delivery Manager": "Shahid Raza"
-                                                }"""
+                                                 "Resource Owner": "Honey Shah",
+                                                 "Create-Date": "22 April 2026",
+                                                 "Sub Business Unit": "PES-IA",
+                                                 "Project Name": "Testing and Learning",
+                                                 "Delivery Manager": "Shahid Raza"
+                                               }"""
                         ]) {
-                            sh 'terraform plan -out=tfplan'
+                            sh 'terraform plan -no-color -out=tfplan'
                         }
                     }
 
@@ -105,7 +111,7 @@ pipeline {
                     string(credentialsId: 'aws_access_key_id', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'aws_secret_access_key', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
-                    sh 'terraform apply -auto-approve tfplan'
+                    sh 'terraform apply -no-color -auto-approve tfplan'
                 }
             }
         }
