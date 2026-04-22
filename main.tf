@@ -5,6 +5,7 @@ module "ec2" {
   subnet_id          = var.subnet_id
   ami_id             = var.ami_id
   instance_type      = var.instance_type
+  availability_zone  = var.availability_zone
   key_name           = var.key_name
   public_key         = var.public_key
   private_key        = var.private_key

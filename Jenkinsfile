@@ -6,6 +6,7 @@ pipeline {
         string(name: 'AMI_ID', description: 'AMI ID')
         string(name: 'VPC_ID', description: 'VPC ID')
         string(name: 'SUBNET_ID', description: 'Subnet ID')
+        string(name: 'AVAILABILITY_ZONE', description: 'AWS Availability Zone')
         string(name: 'INSTANCE_TYPE', description: 'EC2 Instance Type')
         string(name: 'KEY_NAME', description: 'AWS Key Pair Name')
         string(name: 'VPC_CIDR', description: 'VPC CIDR Block')
@@ -70,6 +71,7 @@ pipeline {
                             "TF_VAR_instance_type=${params.INSTANCE_TYPE}",
                             "TF_VAR_vpc_id=${params.VPC_ID}",
                             "TF_VAR_subnet_id=${params.SUBNET_ID}",
+                            "TF_VAR_availability_zone=${params.AVAILABILITY_ZONE}",
                             "TF_VAR_vpc_cidr=${params.VPC_CIDR}",
                             "TF_VAR_ssh_user=${params.ssh_user}",
                             "TF_VAR_ssh_port=${params.ssh_port}",
